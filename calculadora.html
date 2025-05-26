@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Calculadora de Aquário</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Reset básico */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 100%;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.5s ease-in-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        h1 {
+            color: #34495e;
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .input-section {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #fafcfc;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .input-group:hover {
+            border-color: #3498db;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
+        }
+
+        .input-group i {
+            margin-right: 10px;
+            color: #2c3e50;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            outline: none;
+        }
+
+        .btn {
+            width: 100%;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .result-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .result-box {
+            background-color: #BEE7B8;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: left;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .result-box.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .result-box h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .result-box p {
+            color: #2c3e50;
+            margin: 5px 0;
+            font-size: 1rem;
+        }
+
+        .chart-section {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        /* Media Queries para Responsividade */
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .input-section {
+                grid-column: span 2;
+            }
+
+            .result-section {
+                grid-column: span 2;
+            }
+
+            .chart-section {
+                grid-column: span 2;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            h1 {
+                font-size: 3rem;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Dashboard - Calculadora de Aquário</h1>
+
+        <!-- Seção de Entrada de Dados -->
+        <div class="input-section">
+            <div class="input-group">
+                <i class="fas fa-arrows-alt-h"></i>
+                <p>Comprimento:</p>
+                <input type="number" id="length" placeholder="Comprimento (cm)" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-arrows-alt-v"></i>
+                <p>Largura:</p>
+                <input type="number" id="width" placeholder="Largura (cm)" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-arrows-alt-v"></i>
+                <p>Altura:</p>
+                <input type="number" id="height" placeholder="Altura (cm)" required>
+            </div>
+            <button type="button" class="btn" onclick="calculateAquarium()">
+                <i class="fas fa-calculator"></i> Calcular
+            </button>
+
+            <!-- Mensagem de Erro -->
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <!-- Seção de Resultados -->
+        <div class="result-section" id="result">
+            <div class="result-box" id="volumeBox">
+                <h4>Volume</h4>
+                <p id="volume"></p>
+            </div>
+            <div class="result-box" id="weightBox">
+                <h4>Peso da Água</h4>
+                <p id="weight"></p>
+            </div>
+            <div class="result-box" id="glassDimensionsBox">
+                <h4>Dimensões do Vidro</h4>
+                <p id="glassDimensions"></p>
+            </div>
+            <div class="result-box" id="glassThicknessBox">
+                <h4>Espessura do Vidro</h4>
+                <p id="glassThickness"></p>
+            </div>
+            <div class="result-box" id="bracingBox">
+                <h4>Travamento Recomendado</h4>
+                <p id="bracing"></p>
+            </div>
+        </div>
+
+        <!-- Seção de Gráficos -->
+        <div class="chart-section">
+            <canvas id="aquariumChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        function calculateAquarium() {
+            const length = parseFloat(document.getElementById('length').value);
+            const width = parseFloat(document.getElementById('width').value);
+            const height = parseFloat(document.getElementById('height').value);
+
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Limpa a mensagem de erro
+            errorMessage.textContent = '';
+            errorMessage.classList.remove('show');
+
+            if (!length || !width || !height) {
+                errorMessage.textContent = 'Por favor, preencha todos os campos.';
+                errorMessage.classList.add('show');
+                document.getElementById('input-section').classList.add('shake');
+                setTimeout(() => {
+                    document.getElementById('input-section').classList.remove('shake');
+                }, 500);
+                return;
+            }
+
+            const maxLength = 200;
+            const maxWidth = 75;
+            const maxHeight = 70;
+
+            if (length > maxLength || width > maxWidth || height > maxHeight) {
+                errorMessage.textContent = `As dimensões não devem exceder: Comprimento: ${maxLength} cm, Largura: ${maxWidth} cm, Altura: ${maxHeight} cm.`;
+                errorMessage.classList.add('show');
+                document.getElementById('input-section').classList.add('shake');
+                setTimeout(() => {
+                    document.getElementById('input-section').classList.remove('shake');
+                }, 500);
+                return;
+            }
+
+            const volumeLiters = (length * width * height) / 1000;
+            document.getElementById('volume').textContent = `${volumeLiters.toFixed(2)} litros`;
+
+            const weightKg = volumeLiters;
+            document.getElementById('weight').textContent = `${weightKg.toFixed(2)} kg`;
+
+            const glassThickness = calculateGlassThickness(length, width, height);
+
+            const frontBackLength = length;
+            const frontBackHeight = height;
+            const sideWidth = width - 2 * (glassThickness / 10); // Convertendo mm para cm
+            const sideHeight = height;
+            const topBottomLength = length;
+            const topBottomWidth = width;
+
+            const glassDimensions = `
+                Frente/Traseira: ${frontBackLength}cm x ${frontBackHeight}cm (2 peças)
+                Laterais: ${sideWidth.toFixed(1)}cm x ${sideHeight}cm (2 peças)
+                Fundo/Tampa: ${topBottomLength}cm x ${topBottomWidth}cm (2 peças)
+            `;
+            
+            document.getElementById('glassDimensions').innerHTML = glassDimensions.replace(/\n/g, '<br>');
+
+            document.getElementById('glassThickness').textContent = `${glassThickness.toFixed(1)} mm`;
+
+            const bracing = calculateBracing(length, width);
+            document.getElementById('bracing').textContent = bracing;
+
+            // Mostrar os resultados com animação
+            const resultBoxes = document.querySelectorAll('.result-box');
+            resultBoxes.forEach(box => box.classList.add('show'));
+
+            // Atualizar o gráfico
+            updateChart(length, width, height);
+        }
+
+        function calculateGlassThickness(length, width, height) {
+            const maxDimension = Math.max(length, width, height);
+
+            let baseThickness;
+            if (maxDimension <= 60) baseThickness = 6; // mm
+            else if (maxDimension <= 90) baseThickness = 8; // mm
+            else if (maxDimension <= 120) baseThickness = 10; // mm
+            else if (maxDimension <= 150) baseThickness = 12; // mm
+            else if (maxDimension <= 180) baseThickness = 15; // mm
+            else baseThickness = 19; // mm
+
+            return baseThickness;
+        }
+
+        function calculateBracing(length, width) {
+            const perimeter = 2 * (parseFloat(length) + parseFloat(width));
+            if (perimeter <= 300) return "Travamento inferior e superior";
+            if (perimeter <= 600) return "Travamento inferior, superior e central";
+            return "Travamento inferior, superior, central e cantoneiras";
+        }
+
+        // Gráfico com Chart.js
+        const ctx = document.getElementById('aquariumChart').getContext('2d');
+        let aquariumChart;
+
+        function updateChart(length, width, height) {
+            if (aquariumChart) {
+                aquariumChart.destroy();
+            }
+
+            aquariumChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Comprimento', 'Largura', 'Altura'],
+                    datasets: [{
+                        label: 'Dimensões (cm)',
+                        data: [length, width, height],
+                        backgroundColor: ['#3498db', '#2ecc71', '#e74c3c'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
